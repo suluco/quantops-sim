@@ -49,3 +49,15 @@ def test_flight_generator():
     arrivals = [f.scheduled_arrival for f in flights]
     assert arrivals == sorted(arrivals)
     
+
+
+from simulator.statistics import flights_per_hour, average_turnaround, peak_hour_ratio
+
+def test_statistics():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=50)
+
+    assert average_turnaround(flights) > 0
+    assert 0.0 <= peak_hour_ratio(flights) <= 1.0
+    per_hour = flights_per_hour(flights)
+    assert sum(per_hour.values()) == 50
