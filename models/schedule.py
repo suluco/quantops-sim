@@ -38,3 +38,5 @@ class Schedule:
                     if slot_a.overlaps_with(slot_b):
                         conflicts.append((slot_a, slot_b))
         return conflicts
+    
+    

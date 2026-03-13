@@ -34,3 +34,18 @@ def test_schedule_conflict_detection():
     schedule.add_gate_slot(slot_b)
     conflicts = schedule.get_conflicts()
     assert len(conflicts) == 1
+
+
+from simulator.flight_generator import generate_flights
+
+def test_flight_generator():
+    date = datetime(2026, 3 ,13)
+    flights = generate_flights(date, n=50)
+
+    assert len(flights) ==50
+    assert all(f.scheduled_departure > f.scheduled_arrival for f in flights)
+    assert all(f.turnaround_minutes() >= 45 for f in flights)
+    #check sorted by arrival
+    arrivals = [f.scheduled_arrival for f in flights]
+    assert arrivals == sorted(arrivals)
+    
