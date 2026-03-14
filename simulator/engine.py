@@ -20,9 +20,10 @@ class SimulatorEngine:
   events to shared queue as simulated time progresses
     """
 
-    def __init__(self, event_queue: queue.Queue, sim_date: datetime) -> None:
+    def __init__(self, event_queue: queue.Queue, sim_date: datetime, state_store=None) -> None:
         self.event_queue = event_queue
         self.sim_date = sim_date
+        self.state_store = state_store
         self.running = False
         self.sim_time = sim_date.replace(hour=0, minute=0, second=0)
         self.flights: list[Flight] = []
@@ -35,6 +36,8 @@ class SimulatorEngine:
         self.flights = generate_flights(self.sim_date)
         for flight in self.flights:
             apply_delay(flight, self.rng)
+            if self.state_store:
+                self.state_store.update_flight(flight)
         if self.flights:
             first = min(self.flights, key=lambda f: f.actual_arrival or f.scheduled_arrival)
             self.sim_time = (first.actual_arrival or first.scheduled_arrival).replace(second=0, microsecond=0)
@@ -68,12 +71,20 @@ class SimulatorEngine:
                         description=f"Flight {flight.flight_id} arriving on schedule",
                     )
                 self.event_queue.put(event)
+                if self.state_store:
+                    self.state_store.add_event(event)
 
     def _run(self) -> None:
-        """main sim loop. advances time and generates events"""
+        """Main simulation loop. Advances time and generates events."""
+        if self.state_store:
+            self.state_store.set_running(True)
         while self.running and self.sim_time.date() == self.sim_date.date():
             self._check_flights()
             self._advance_time()
+            if self.state_store:
+                self.state_store.update_sim_time(self.sim_time)
             time.sleep(60 / SIMULATION_SPEED)
         self.running = False
+        if self.state_store:
+            self.state_store.set_running(False)
 

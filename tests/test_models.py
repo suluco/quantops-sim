@@ -133,3 +133,29 @@ def test_simulator_engine():
     event = event_queue.get()
     assert event.entity_id is not None
     assert event.timestamp is not None
+
+
+
+from simulator.state_store import StateStore
+
+def test_state_store():
+    event_queue = queue.Queue()
+    sim_date = datetime(2026, 3, 13)
+    store = StateStore()
+    engine = SimulatorEngine(event_queue, sim_date, state_store=store)
+
+    engine.start()
+    time.sleep(5)
+    engine.stop()
+
+
+    flights = store.get_flights()
+    assert len(flights) == 50
+
+    events = store.get_events()
+    assert len(events) > 0
+
+    summary = store.get_summary()
+    assert summary["total"] == 50
+    assert summary["on_time_pct"] >= 0.0
+    
