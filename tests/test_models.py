@@ -111,4 +111,25 @@ def test_event_generator():
     assert classify_severity(20) == EventSeverity.LARGE
     assert classify_severity(60) == EventSeverity.CRITICAL
 
-                            
+
+
+import time
+import queue
+from simulator.engine import SimulatorEngine
+
+def test_simulator_engine():
+    event_queue = queue.Queue()
+    sim_date = datetime (2026, 3, 13)
+    engine = SimulatorEngine(event_queue, sim_date)
+
+    engine.start()
+    time.sleep(5)
+    engine.stop()
+
+
+    assert not event_queue.empty()
+
+
+    event = event_queue.get()
+    assert event.entity_id is not None
+    assert event.timestamp is not None
