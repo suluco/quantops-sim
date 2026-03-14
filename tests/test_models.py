@@ -1,3 +1,4 @@
+import numpy as np
 from datetime import datetime
 from models.flight import Flight, FlightStatus
 from models.gate import Gate, GateType
@@ -61,3 +62,53 @@ def test_statistics():
     assert 0.0 <= peak_hour_ratio(flights) <= 1.0
     per_hour = flights_per_hour(flights)
     assert sum(per_hour.values()) == 50
+
+
+
+from simulator.delay_model import generate_delay, apply_delay
+
+def test_delay_model():
+    rng = np.random.default_rng(seed=42)
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=100)
+
+    delayed = [apply_delay(f, rng) for f in flights]
+
+    n_delayed = sum(1 for f in delayed if f.is_delayed())
+    assert 0 < n_delayed < 100
+
+    for f in delayed:
+        if f.is_delayed():
+            assert f.actual_arrival > f.scheduled_arrival
+            assert f.delay_minutes > 0
+
+
+
+
+from simulator.event_generator import (
+    create_delay_event, create_cancel_event,
+    create_maintenance_event, create_gate_change_event, classify_severity
+)
+from models.event import EventType, EventSeverity
+
+def test_event_generator():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=10)
+    rng = np.random.default_rng(seed=42)
+    flight = apply_delay(flights[0], rng)
+
+    event = create_delay_event(flight, date)
+    assert event.event_type == EventType.DELAY
+    assert event.entity_id == flight.flight_id
+
+
+    cancel = create_cancel_event(flights[1], date)
+    assert cancel.event_type == EventType.CANCEL
+    assert cancel.severity == EventSeverity.CRITICAL
+
+
+    assert classify_severity(5) == EventSeverity.SMALL
+    assert classify_severity(20) == EventSeverity.LARGE
+    assert classify_severity(60) == EventSeverity.CRITICAL
+
+                            
