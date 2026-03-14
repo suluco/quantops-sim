@@ -78,6 +78,7 @@ class SimulatorEngine:
         """Main simulation loop. Advances time and generates events."""
         if self.state_store:
             self.state_store.set_running(True)
+        end_time = self.sim_date.replace(hour=23, minute=0, second=0)
         while self.running and self.sim_time.date() == self.sim_date.date():
             self._check_flights()
             self._advance_time()

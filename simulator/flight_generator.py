@@ -5,7 +5,7 @@ import random
 import string
 
 
-AIRLINES = ["KLM", "Transavia", "Ryanair", "Lufthansa", "British Airways" "Easyjet"]
+AIRLINES = ["KLM", "Transavia", "Ryanair", "Lufthansa", "British Airways", "Easyjet"]
 DESTINATIONS = ["LHR", "CDG", "FRA", "DCN", "FCO", "MAD", "AMS", "BRU", "ZRH", "VIE"]
 
 
@@ -36,14 +36,24 @@ def generate_flights(date: datetime, n: int = 50) -> list[Flight]:
         return date.replace(hour=int(hour), minute=int(minute), second=0, microsecond=0)
     
     def random_offpeak_time() -> datetime:
-        hour = rng.integers(10, 17)
-        minute = rng.integers(0, 60)
+        if rng.random() < 0.7:
+            hour = rng.integers(10, 17)
+            minute = rng.integers(0, 60)
+        else:
+            hour = 19 + int(rng.random() < 0.5)
+            minute = rng.integers(0, 30) if hour == 20 else rng.integers(0, 60)
         return date.replace(hour=int(hour), minute=int(minute), second=0, microsecond=0)
     
     for i in range(n):
         airline = random.choice(AIRLINES)
-        destination = random.choice(DESTINATIONS)
-        origin = random.choice([d for d in DESTINATIONS if d != destination])
+        other_airport = random.choice([d for d in DESTINATIONS if d != "AMS"])
+
+        if rng.random() < 0.5:
+            origin = other_airport
+            destination = "AMS"
+        else:
+            origin = "AMS"
+            destination = other_airport
 
         arrival = random_peak_time() if i < peak_slots else random_offpeak_time()
         turnaround = timedelta(minutes=int(rng.integers(45, 120)))
