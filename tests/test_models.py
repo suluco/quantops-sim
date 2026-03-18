@@ -159,3 +159,24 @@ def test_state_store():
     assert summary["total"] == 50
     assert summary["on_time_pct"] >= 0.0
     
+
+
+from simulator.gate_generator import generate_gates
+from optimizer.greedy import assign_gates_greedy
+
+def test_greedy_optimizer():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=50)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+    
+    gates = generate_gates()
+    schedule = Schedule()
+    assignments = assign_gates_greedy(flights, gates, schedule)
+
+    assert len(assignments) == 50
+    assert all(gate_id is not None for gate_id in assignments.values())
+
+    conflicts = schedule.get_conflicts()
+    assert len(conflicts) == 0

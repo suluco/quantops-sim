@@ -69,5 +69,5 @@ with tab2:
         st.info("No events yet...")
 
 import time
-time.sleep(3)
+time.sleep(1)
 st.rerun()
