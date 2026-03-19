@@ -226,3 +226,25 @@ def test_lp_optimizer():
 
     conflicts = schedule.get_conflicts()
     assert len(conflicts) == 0
+
+
+
+from optimizer.engine import OptimizerEngine
+
+def test_optimizer_engine():
+    event_queue = queue.Queue()
+    sim_date = datetime(2026, 3, 13)
+    store = StateStore()
+    gates = generate_gates()
+
+    simulator = SimulatorEngine(event_queue, sim_date, state_store=store)
+    optimizer = OptimizerEngine(event_queue, store, gates)
+
+    simulator.start()
+    optimizer.start()
+    time.sleep(5)
+    optimizer.stop()
+    simulator.stop()
+
+    flights = store.get_flights()
+    assert all(f.gate_id is not None for f in flights)

@@ -5,6 +5,8 @@ from models.gate import Gate
 from models.schedule import Schedule
 from simulator.state_store import StateStore
 from optimizer.greedy import assign_gates_greedy
+from optimizer.lp_optimizer import assign_gates_lp
+from optimizer.conflict_detector import count_conflicts, classify_conflict_severity, get_conflicting_flights
 
 
 class OptimizerEngine:
@@ -22,6 +24,9 @@ class OptimizerEngine:
         self._initial_assignment()
         self._thread.start()
 
+    def stop(self) -> None:
+        self.running = False
+
     def _initial_assignment(self) -> None:
         flights = self.state_store.get_flights()
         if flights:
@@ -29,6 +34,38 @@ class OptimizerEngine:
             for flight in flights:
                 self.state_store.update_flight(flight)
     
+    def _replan(self) -> None:
+        """
+        detects conflicts and chooses appropriate algorithm:
+        small: greedy
+        large: LP
+        cascade: full replan with LP
+        """
+        flights = self.state_store.get_flights()
+        total = len(flights)
+        conflict_count = count_conflicts(flights, self.schedule)
+        severity = classify_conflict_severity(conflict_count, total)
+
+        if severity == "none":
+            return
+        
+        conflicting = get_conflicting_flights(flights, self.schedule)
+
+        if severity == "small":
+            assign_gates_greedy(conflicting, self.gates, self.schedule)
+            algo = "greedy"
+        elif severity == "large":
+            assign_gates_lp(conflicting, self.gates, self.schedule)
+            algo = "LP"
+        else:   #cascade
+            assign_gates_lp(flights, self.gates, self.schedule)
+            algo ="LP (full replan)"
+        
+        for flights in flights:
+            self.state_store.update_flight(flight)
+        
+        print(f"[Optimizer] {severity.upper()} - {conflict_count} conflicts resolved with {algo}")
+
     def _handle_event(self, event: Event) -> None:
         flights = self.state_store.get_flights()
         unassigned = [f for f in flights if f.gate_id is None]
@@ -36,6 +73,7 @@ class OptimizerEngine:
             assign_gates_greedy(unassigned, self.gates, self.schedule)
             for flight in unassigned:
                 self.state_store.update_flight(flight)
+        self._replan()
     
     def _run(self) -> None:
         while self.running:
