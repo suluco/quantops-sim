@@ -15,14 +15,25 @@ st.set_page_config(
 )
 
 if "store" not in st.session_state:
+    from simulator.gate_generator import generate_gates
+    from optimizer.engine import OptimizerEngine
+
     st.session_state.store = StateStore()
     st.session_state.event_queue = queue.Queue()
+    st.session_state.gates = generate_gates()
+
     st.session_state.engine = SimulatorEngine(
         event_queue=st.session_state.event_queue,
         sim_date=datetime.today().replace(hour=0, minute=0, second=0, microsecond=0),
         state_store=st.session_state.store,
     )
+    st.session_state.optimizer = OptimizerEngine(
+        event_queue=st.session_state.event_queue,
+        state_store=st.session_state.store,
+        gates=st.session_state.gates,
+    )
     st.session_state.engine.start()
+    st.session_state.optimizer.start()
 
 store: StateStore = st.session_state.store
 
@@ -50,6 +61,7 @@ with tab1:
             "Airline": f.airline,
             "From": f.origin,
             "To": f.destination,
+            "Gate": f.gate_id or "-",
             "Scheduled arrival": f.scheduled_arrival.strftime("%H:%M"),
             "Scheduled departure": f.scheduled_departure.strftime("%H:%M"),
             "Delay (min)": f.delay_minutes,
