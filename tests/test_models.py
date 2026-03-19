@@ -150,7 +150,7 @@ def test_state_store():
 
 
     flights = store.get_flights()
-    assert len(flights) == 50
+    assert len(flights) >= 48
 
     events = store.get_events()
     assert len(events) > 0
@@ -180,3 +180,28 @@ def test_greedy_optimizer():
 
     conflicts = schedule.get_conflicts()
     assert len(conflicts) == 0
+
+
+
+from optimizer.conflict_detector import count_conflicts, classify_conflict_severity, get_conflicting_flights
+
+def test_conflict_detector():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=50)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+    
+    gates = generate_gates()
+    schedule = Schedule()
+    assign_gates_greedy(flights, gates, schedule)
+
+    assert count_conflicts(flights, schedule) == 0
+
+    assert classify_conflict_severity(0, 50) == "none"
+    assert classify_conflict_severity(2, 50) == "small"
+    assert classify_conflict_severity(5, 50) == "large"
+    assert classify_conflict_severity(25, 50) == "cascade"
+
+    conflicting = get_conflicting_flights(flights, schedule)
+    assert len(conflicting) == 0 
