@@ -298,3 +298,34 @@ def test_cascade_detector():
     
     assert cascade_ratio(flights, []) == 0.0
     assert cascade_ratio([], []) == 0.0
+
+from optimizer.simulated_annealing import assign_gates_sa
+from optimizer.astar import assign_gates_astar
+
+def test_simulated_annealing():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=20)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+
+    gates = generate_gates()
+    schedule = Schedule()
+    assignments = assign_gates_sa(flights, gates, schedule)
+
+    assert len(assignments) == 20
+    assert all(gate_id is not None for gate_id in assignments.values())
+
+def test_astar():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=10)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+    
+    gates = generate_gates()
+    schedule = Schedule()
+    assignments = assign_gates_astar(flights, gates, schedule)
+
+    assert len(assignments) == 10
+    assert all(gate_id is not None for gate_id in assignments.values())
