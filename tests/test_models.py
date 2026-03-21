@@ -248,3 +248,53 @@ def test_optimizer_engine():
 
     flights = store.get_flights()
     assert all(f.gate_id is not None for f in flights)
+
+
+
+from simulator.weather import generate_weather_events, get_active_weather, WeatherType
+
+def test_weather():
+    date = datetime(2026, 3, 13)
+    rng = np.random.default_rng(seed=42)
+    events = generate_weather_events(date, rng)
+
+    assert 0 <= len(events) <= 3
+
+    for event in events:
+        assert event.delay_factor >= 1.5
+        assert event.weather_type in WeatherType
+    
+    if events:
+        active = get_active_weather(events, events[0].start_time)
+        assert active is not None
+
+
+from optimizer.cascade_detector import find_cascade, apply_cascade, cascade_ratio
+
+def test_cascade_detector():
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=50)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+
+    gates = generate_gates()
+    schedule = Schedule()
+    assign_gates_greedy(flights, gates, schedule)
+
+
+    delayed = [f for f in flights if f.is_delayed()]
+    if delayed:
+        trigger = delayed[0]
+        trigger.delay_minutes = 120
+        from datetime import timedelta
+        trigger.actual_departure = trigger.scheduled_departure + timedelta(minutes=120)
+
+        affected = find_cascade(trigger, flights, schedule)
+        ratio = cascade_ratio(flights, affected)
+
+        assert 0.0 <= ratio <= 1.0
+        assert isinstance(affected, list)
+    
+    assert cascade_ratio(flights, []) == 0.0
+    assert cascade_ratio([], []) == 0.0

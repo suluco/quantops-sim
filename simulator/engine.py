@@ -9,6 +9,7 @@ from models.event import Event
 from simulator.flight_generator import generate_flights
 from simulator.delay_model import apply_delay
 from simulator.event_generator import create_delay_event, create_cancel_event
+from simulator.weather import generate_weather_events, get_active_weather, WeatherEvent
 
 
 SIMULATION_SPEED = 60 * 24 / 30
@@ -28,12 +29,14 @@ class SimulatorEngine:
         self.sim_time = sim_date.replace(hour=0, minute=0, second=0)
         self.flights: list[Flight] = []
         self.rng = np.random.default_rng()
+        self.weather_events: list[WeatherEvent] = []
         self._thread = threading.Thread(target=self._run, daemon=True)
 
     def start(self) -> None:
         """starts the sim in background thread"""
         self.running = True
         self.flights = generate_flights(self.sim_date)
+        self.weather_events = generate_weather_events(self.sim_date, self.rng)
         for flight in self.flights:
             apply_delay(flight, self.rng)
             if self.state_store:
@@ -54,11 +57,23 @@ class SimulatorEngine:
         import uuid
         from models.event import Event, EventType, EventSeverity
 
+        active_weather = get_active_weather(self.weather_events, self.sim_time)
+
         for flight in self.flights:
             arrival = flight.actual_arrival or flight.scheduled_arrival
             if (arrival.hour == self.sim_time.hour
-                and arrival.minute == self.sim_time.minute
-                and arrival.date() == self.sim_time.date()):
+                    and arrival.minute == self.sim_time.minute
+                    and arrival.date() == self.sim_time.date()):
+
+                if active_weather and flight.is_delayed():
+                    extra_delay = int(flight.delay_minutes * (active_weather.delay_factor - 1))
+                    flight.delay_minutes += extra_delay
+                    from datetime import timedelta
+                    flight.actual_arrival += timedelta(minutes=extra_delay)
+                    flight.actual_departure += timedelta(minutes=extra_delay)
+                    if self.state_store:
+                        self.state_store.update_flight(flight)
+
                 if flight.is_delayed():
                     event = create_delay_event(flight, self.sim_time)
                 else:
@@ -70,6 +85,10 @@ class SimulatorEngine:
                         entity_id=flight.flight_id,
                         description=f"Flight {flight.flight_id} arriving on schedule",
                     )
+                
+                if active_weather:
+                    event.description += f" [{active_weather.weather_type.value.upper()}]"
+
                 self.event_queue.put(event)
                 if self.state_store:
                     self.state_store.add_event(event)
