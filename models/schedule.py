@@ -39,4 +39,8 @@ class Schedule:
                         conflicts.append((slot_a, slot_b))
         return conflicts
     
-    
+    def add_vehicle_slot(self, slot: TimeSlot) -> None:
+        """adds time slot to vehicles schedule"""
+        if slot.entity_id not in self.vehicle_slots:
+            self.vehicle_slots[slot.entity_id] = []
+        self.vehicle_slots[slot.entity_id].append(slot)
