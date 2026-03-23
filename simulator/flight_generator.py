@@ -56,7 +56,7 @@ def generate_flights(date: datetime, n: int = 50) -> list[Flight]:
             destination = other_airport
 
         arrival = random_peak_time() if i < peak_slots else random_offpeak_time()
-        turnaround = timedelta(minutes=int(rng.integers(45, 120)))
+        turnaround = timedelta(minutes=int(rng.integers(45, 76)))
         departure = arrival + turnaround
 
         flight = Flight(
