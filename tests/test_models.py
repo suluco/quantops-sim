@@ -354,3 +354,25 @@ def test_vehicle_scheduler():
         assert "tanker" in vehicle_assignment
         assert "catering" in vehicle_assignment
         assert "baggage" in vehicle_assignment
+
+
+from optimizer.ml_model import build_training_data, train_model, predict_delay, load_model
+
+def test_ml_model():
+    df = build_training_data(n_days=20)
+    assert len(df) == 1000
+    assert "delayed" in df.columns
+
+    model = train_model(df)
+
+    date = datetime(2026, 3, 13)
+    flights = generate_flights(date, n=10)
+    rng = np.random.default_rng(seed=42)
+    for flight in flights:
+        apply_delay(flight, rng)
+
+    from simulator.statistics import flights_per_hour
+    occupancy = flights_per_hour(flights)
+
+    prob = predict_delay(flights[0], model, occupancy)
+    assert 0.0 <= prob <= 1.0
