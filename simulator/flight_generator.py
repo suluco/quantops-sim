@@ -6,7 +6,13 @@ import string
 
 
 AIRLINES = ["KLM", "Transavia", "Ryanair", "Lufthansa", "British Airways", "Easyjet"]
-DESTINATIONS = ["LHR", "CDG", "FRA", "DCN", "FCO", "MAD", "AMS", "BRU", "ZRH", "VIE"]
+
+#schengen destinations -> terminal D
+#non-schengen destinations -> terminal E/F
+SCHENGEN_DESTINATIONS = ["CDG", "FRA", "BCN", "MAD", "BRU", "ZRH", "VIE", "FCO"]
+NON_SCHENGEN_DESTINATIONS = ["LHR", "JFK", "DXB", "BKK", "YYZ", "GRU"]
+
+DESTINATIONS = SCHENGEN_DESTINATIONS + NON_SCHENGEN_DESTINATIONS
 
 
 def generate_flight_id(airline: str) -> str:
@@ -47,6 +53,12 @@ def generate_flights(date: datetime, n: int = 50) -> list[Flight]:
     for i in range(n):
         airline = random.choice(AIRLINES)
         other_airport = random.choice([d for d in DESTINATIONS if d != "AMS"])
+
+        #70% Schengen, 30% non-Schengen
+        if rng.random() < 0.7:
+            other_airport = random.choice(SCHENGEN_DESTINATIONS)
+        else:
+            other_airport = random.choice(NON_SCHENGEN_DESTINATIONS)
 
         if rng.random() < 0.5:
             origin = other_airport

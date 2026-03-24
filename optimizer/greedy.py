@@ -5,16 +5,18 @@ from models.schedule import Schedule, TimeSlot
 
 
 def find_available_gate(
-        flight: Flight,
-        gates: list[Gate],
-        schedule: Schedule,
-        buffer_minutes: int = 15,
+    flight: Flight,
+    gates: list[Gate],
+    schedule: Schedule,
+    buffer_minutes: int = 15,
 ) -> Gate | None:
     """
-    finds the first avail gate for a flight using greedy strategy.
-    adds buffer between flights to allow cleaning and boarding.
-    returns None if no gate is avail.
+    finds the first available gate for a flight using a greedy strategy
+    Schengen flights go to Terminal D, on-Schengen to Terminal E/F
+    eturns None if no gate is available
     """
+    from simulator.flight_generator import SCHENGEN_DESTINATIONS
+
     arrival = flight.actual_arrival or flight.scheduled_arrival
     departure = flight.actual_departure or flight.scheduled_departure
     slot = TimeSlot(
@@ -24,12 +26,25 @@ def find_available_gate(
         end_time=departure + timedelta(minutes=buffer_minutes),
     )
 
-    for gate in gates: 
-        existing_slots = schedule.gate_slots.get(gate.gate_id, [])
-        conflict = any(slot.overlaps_with(s) for s in existing_slots)
-        if not conflict:
-            return gate
-        
+    #determine preferred terminal based on destination
+    destination = flight.destination if flight.destination != "AMS" else flight.origin
+    if destination in SCHENGEN_DESTINATIONS:
+        preferred_terminals = ["D"]
+        fallback_terminals = ["E", "F"]
+    else:
+        preferred_terminals = ["E", "F"]
+        fallback_terminals = ["D"]
+
+    #try preferred terminal first, then fallback
+    for terminals in [preferred_terminals, fallback_terminals]:
+        for gate in gates:
+            if gate.terminal not in terminals:
+                continue
+            existing_slots = schedule.gate_slots.get(gate.gate_id, [])
+            conflict = any(slot.overlaps_with(s) for s in existing_slots)
+            if not conflict:
+                return gate
+
     return None
 
 

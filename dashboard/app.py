@@ -49,7 +49,7 @@ col4.metric("On-time %", f"{summary['on_time_pct']}%")
 
 st.divider()
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Flights", "Event log", "Gantt", "Scenario", "Comparison"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Flights", "Event log", "Gantt", "Scenario", "Comparison", "Map"])
 
 with tab1:
     flights = store.get_flights()
@@ -280,6 +280,35 @@ with tab5:
         st.dataframe(bench_data, use_container_width=True)
     else:
         st.info("No benchmark results found. Run `python -m optimizer.benchmark` first.")
+
+
+with tab6:
+    from dashboard.live_map import build_live_map
+    from simulator.vehicle_generator import generate_vehicles
+
+    flights = store.get_flights()
+    sim_time_now = store.get_sim_time()
+
+    #generate vehicles if not in session state
+    if "vehicles" not in st.session_state:
+        st.session_state.vehicles = generate_vehicles()
+
+    #assign vehicles to gates based on current flights
+    vehicles = st.session_state.vehicles
+    for vehicle in vehicles:
+        vehicle.current_gate_id = None
+    for flight in flights:
+        if flight.gate_id and (flight.actual_arrival or flight.scheduled_arrival) <= (sim_time_now or datetime.now()):
+            for vehicle in vehicles:
+                if vehicle.current_gate_id is None and vehicle.is_available:
+                    vehicle.current_gate_id = flight.gate_id
+                    break
+
+    if sim_time_now:
+        fig_live = build_live_map(flights, vehicles, sim_time_now)
+        st.plotly_chart(fig_live, use_container_width=True)
+    else:
+        st.info("Simulator starting...")
 
 time.sleep(3)
 st.rerun()

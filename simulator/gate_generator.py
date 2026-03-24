@@ -8,7 +8,7 @@ def generate_gates() -> list[Gate]:
     """
     gates = []
 
-    for i in range(1, 16):
+    for i in range(1, 9):
         gates.append(Gate(
             gate_id=f"D{i:02d}",
             terminal="D",
@@ -16,7 +16,7 @@ def generate_gates() -> list[Gate]:
             capacity=180,
         ))
 
-    for i in range(1, 8):
+    for i in range(1, 6):
         gates.append(Gate(
             gate_id=f"E{i:02d}",
             terminal="E",
@@ -24,7 +24,7 @@ def generate_gates() -> list[Gate]:
             capacity=220,
         ))
 
-    for i in range(1, 4):
+    for i in range(1, 3):
         gates.append(Gate(
             gate_id=f"F{i:02d}",
             terminal="F",
