@@ -62,7 +62,7 @@ class OptimizerEngine:
             algo ="LP (full replan)"
         
         for flights in flights:
-            self.state_store.update_flight(flight)
+            self.state_store.update_flight(flights)
         
         print(f"[Optimizer] {severity.upper()} - {conflict_count} conflicts resolved with {algo}")
 
@@ -82,3 +82,28 @@ class OptimizerEngine:
                 self._handle_event(event)
             except queue.Empty:
                 continue
+    
+    def force_replan(self) -> None:
+        """
+        clears schedule and replans all flights from scratch
+        excludes cancelled flights that haven't arived yet
+        """
+        from datetime import datetime
+        from models.flight import FlightStatus
+        
+        self.schedule = Schedule()
+        flights = self.state_store.get_flights()
+        sim_time = self.state_store.get_sim_time() or datetime.now()
+
+        active_flights = [
+            f for f in flights
+            if not (
+                f.status == FlightStatus.CANCELLED and
+                (f.actual_arrival or f.scheduled_arrival) > sim_time
+            )
+        ]
+
+        if active_flights:
+            assign_gates_greedy(active_flights, self.gates, self.schedule)
+            for flight in active_flights:
+                self.state_store.update_flight(flight)

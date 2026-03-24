@@ -376,3 +376,5 @@ def test_ml_model():
 
     prob = predict_delay(flights[0], model, occupancy)
     assert 0.0 <= prob <= 1.0
+
+    

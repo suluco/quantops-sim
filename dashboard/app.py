@@ -49,7 +49,7 @@ col4.metric("On-time %", f"{summary['on_time_pct']}%")
 
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["Flights", "Event log", "Gantt"])
+tab1, tab2, tab3, tab4 = st.tabs(["Flights", "Event log", "Gantt", "Scenario"])
 
 with tab1:
     flights = store.get_flights()
@@ -66,6 +66,16 @@ with tab1:
             "Status": f.status.value,
         } for f in sorted(flights, key=lambda f: f.scheduled_arrival)]
         st.dataframe(data, use_container_width=True)
+
+        import io
+        csv_buffer = io.StringIO()
+        pd.DataFrame(data).to_csv(csv_buffer, index=False)
+        st.download_button(
+            label="Download planning as CSV",
+            data=csv_buffer.getvalue(),
+            file_name=f"quantops_planning_{sim_date.strftime('%Y-%m-%d')}.csv",
+            mime="text/csv",
+        )
     else:
         st.info("No flights yet...")
 
@@ -98,7 +108,7 @@ with tab3:
         assigned_sorted = sorted(assigned, key=lambda f: f.gate_id or "")
 
         gantt_data = [{
-            "Gate": f.gate_id,
+            "Gate": f.gate_id if f.status.value != "cancelled" or (f.actual_arrival or f.scheduled_arrival) <= (store.get_sim_time() or datetime.now()) else "Cancelled",
             "Flight": f.flight_id,
             "Start": (f.actual_arrival or f.scheduled_arrival).isoformat(),
             "Finish": (f.actual_departure or f.scheduled_departure).isoformat(),
@@ -126,6 +136,10 @@ with tab3:
         )
         fig.update_yaxes(autorange="reversed", tickfont=dict(size=12))
         fig.update_traces(textposition="inside", insidetextanchor="middle")
+        fig.update_traces(
+            opacity=0.4,
+            selector=dict(name="cancelled")
+        )
         fig.update_xaxes(tickformat="%H:%M", tickfont=dict(size=11))
         fig.update_layout(
             height=700,
@@ -137,6 +151,71 @@ with tab3:
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Nog geen gate-toewijzingen...")
+
+with tab4:
+    st.subheader("Inject a scenario")
+    flights = store.get_flights()
+
+    if not flights:
+        st.info("No flights available yet...")
+    else:
+        flight_ids = [f.flight_id for f in sorted(flights, key=lambda f: f.scheduled_arrival)]
+
+        col1, col2 = st.columns(2)
+        with col1:
+            selected_flight_id = st.selectbox("Select flight", flight_ids)
+            scenario_type = st.selectbox("Scenario type", ["Delay", "Cancel", "Maintenance"])
+        
+        with col2:
+            if scenario_type == "Delay":
+                delay_minutes = st.slider("Delay (minutes)", min_value=5, max_value=180, value=30, step=5)
+            st.write("")
+            st.write("")
+            inject = st.button("Inject scenario")
+        
+        if inject:
+            from datetime import timedelta
+            from models.event import Event, EventType, EventSeverity
+            from simulator.event_generator import create_delay_event, create_cancel_event, create_maintenance_event
+            import uuid
+
+            flight = next(f for f in flights if f.flight_id == selected_flight_id)
+            sim_time = store.get_sim_time() or datetime.now()
+
+            if scenario_type == "Delay":
+                flight.delay_minutes += delay_minutes
+                if flight.actual_arrival:
+                    flight.actual_arrival += timedelta(minutes=delay_minutes)
+                if flight.actual_departure:
+                    flight.actual_departure += timedelta(minutes=delay_minutes)
+                else:
+                    flight.actual_departure = flight.scheduled_departure + timedelta(minutes=delay_minutes)
+                if flight.actual_arrival is None:
+                    flight.actual_arrival = flight.scheduled_arrival + timedelta(minutes=delay_minutes)
+                from models.flight import FlightStatus
+                flight.status = FlightStatus.DELAYED
+                store.update_flight(flight)
+                event = create_delay_event(flight, sim_time)
+                store.add_event(event)
+                st.session_state.event_queue.put(event)
+                st.session_state.optimizer.force_replan()
+                st.success(f"Flight {selected_flight_id} delayed by {delay_minutes} minutes")
+            
+            elif scenario_type == "Cancel":
+                event = create_cancel_event(flight, sim_time)
+                store.add_event(event)
+                store.update_flight(flight)
+                st.session_state.event_queue.put(event)
+                st.session_state.optimizer.force_replan()
+                st.success(f"Flight {selected_flight_id} canceled")
+            
+            elif scenario_type == "Maintenance":
+                gate_id = flight.gate_id or "unknown"
+                event = create_maintenance_event(gate_id, sim_time)
+                store.add_event(event)
+                st.session_state.event_queue.put(event)
+                st.session_state.optimizer.force_replan()
+                st.warning(f"Gate {gate_id} taken out of service")
 
 time.sleep(3)
 st.rerun()
