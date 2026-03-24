@@ -49,7 +49,7 @@ col4.metric("On-time %", f"{summary['on_time_pct']}%")
 
 st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Flights", "Event log", "Gantt", "Scenario"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Flights", "Event log", "Gantt", "Scenario", "Comparison"])
 
 with tab1:
     flights = store.get_flights()
@@ -216,6 +216,70 @@ with tab4:
                 st.session_state.event_queue.put(event)
                 st.session_state.optimizer.force_replan()
                 st.warning(f"Gate {gate_id} taken out of service")
+
+
+with tab5:
+    import json
+    benchmark_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'benchmark_results.json')
+    
+    if os.path.exists(benchmark_path):
+        with open(benchmark_path) as f:
+            bench = json.load(f)
+
+        algos = list(bench.keys())
+        times = [bench[a]["avg_time_ms"] for a in algos]
+        conflicts = [bench[a]["avg_conflicts"] for a in algos]
+        distribution = [bench[a]["avg_distribution"] for a in algos]
+
+        st.subheader("Algorithm Comparison")
+        st.caption("Based on 5 benchmark runs with 20 flights each")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            fig_time = px.bar(
+                x=algos, y=times,
+                labels={"x": "Algorithm", "y": "Avg time (ms)"},
+                title="Execution time",
+                color=algos,
+                color_discrete_sequence=["#2ecc71", "#e67e22", "#3498db", "#9b59b6"],
+            )
+            fig_time.update_layout(showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_time, use_container_width=True)
+
+        with col2:
+            fig_conf = px.bar(
+                x=algos, y=conflicts,
+                labels={"x": "Algorithm", "y": "Avg conflicts remaining"},
+                title="Conflicts remaining",
+                color=algos,
+                color_discrete_sequence=["#2ecc71", "#e67e22", "#3498db", "#9b59b6"],
+            )
+            fig_conf.update_layout(showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", yaxis=dict(range=[0, 5]))
+            st.plotly_chart(fig_conf, use_container_width=True)
+
+        with col3:
+            fig_dist = px.bar(
+                x=algos, y=distribution,
+                labels={"x": "Algorithm", "y": "Distribution std (lower = better)"},
+                title="Gate distribution",
+                color=algos,
+                color_discrete_sequence=["#2ecc71", "#e67e22", "#3498db", "#9b59b6"],
+            )
+            fig_dist.update_layout(showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_dist, use_container_width=True)
+
+        st.divider()
+        st.subheader("Raw results")
+        bench_data = [{
+            "Algorithm": a,
+            "Avg time (ms)": bench[a]["avg_time_ms"],
+            "Avg conflicts": bench[a]["avg_conflicts"],
+            "Gate distribution std": bench[a]["avg_distribution"],
+        } for a in algos]
+        st.dataframe(bench_data, use_container_width=True)
+    else:
+        st.info("No benchmark results found. Run `python -m optimizer.benchmark` first.")
 
 time.sleep(3)
 st.rerun()

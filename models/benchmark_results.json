@@ -1,0 +1,22 @@
+{
+  "greedy": {
+    "avg_time_ms": 0.02,
+    "avg_conflicts": 0.0,
+    "avg_distribution": 2.361
+  },
+  "lp": {
+    "avg_time_ms": 371.3,
+    "avg_conflicts": 0.0,
+    "avg_distribution": 0.643
+  },
+  "sa": {
+    "avg_time_ms": 0.8,
+    "avg_conflicts": 0.0,
+    "avg_distribution": 0.538
+  },
+  "astar": {
+    "avg_time_ms": 762.92,
+    "avg_conflicts": 0.0,
+    "avg_distribution": 2.361
+  }
+}
