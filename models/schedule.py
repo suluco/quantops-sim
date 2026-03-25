@@ -4,7 +4,7 @@ from datetime import datetime
 
 @dataclass
 class TimeSlot:
-    """Represents a timeslot for a gate or vehicle assignment"""
+    """represents a timeslot for a gate or vehicle assignment"""
 
     entity_id: str
     flight_id: str

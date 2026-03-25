@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import timedelta
 from models.flight import Flight, FlightStatus
 
 
@@ -15,8 +16,8 @@ def generate_delay(rng: np.random.Generator) -> int:
 def apply_delay(flight: Flight, rng: np.random.Generator) -> Flight:
     """
    applies randomly generated delay to a flight
+   updates actual_arrival, actual_departure, delay_minutes and status
     """
-    from datetime import timedelta
 
     delay = generate_delay(rng)
     flight.delay_minutes = delay

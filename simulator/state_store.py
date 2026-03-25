@@ -7,8 +7,8 @@ from models.schedule import Schedule
 
 class StateStore:
     """
-    Thread-safe shared state between simulator, optimizer and dashboard.
-    All reads and writes are protected by a threading lock.
+    Thread-safe shared state between simulator, optimizer and dashboard
+    all reads and writes are protected by a threading lock
     """
 
     def __init__(self) -> None:
@@ -20,42 +20,42 @@ class StateStore:
         self.is_running: bool = False
 
     def update_flight(self, flight: Flight) -> None:
-        """Adds or updates a flight in the state store."""
+        """adds or updates a flight in the state store"""
         with self._lock:
             self.flights[flight.flight_id] = flight
 
     def add_event(self, event: Event) -> None:
-        """Appends an event to the event log."""
+        """appends an event to the event log"""
         with self._lock:
             self.events.append(event)
 
     def get_flights(self) -> list[Flight]:
-        """Returns a snapshot of all flights."""
+        """returns a snapshot of all flights"""
         with self._lock:
             return list(self.flights.values())
 
     def get_events(self, limit: int = 50) -> list[Event]:
-        """Returns the most recent events up to limit."""
+        """returns the most recent events up to limit"""
         with self._lock:
             return self.events[-limit:]
 
     def update_sim_time(self, sim_time: datetime) -> None:
-        """Updates the current simulated time."""
+        """updates the current simulated time"""
         with self._lock:
             self.sim_time = sim_time
 
     def get_sim_time(self) -> datetime | None:
-        """Returns the current simulated time."""
+        """returns the current simulated time"""
         with self._lock:
             return self.sim_time
 
     def set_running(self, running: bool) -> None:
-        """Sets the simulator running state."""
+        """sets the simulator running state"""
         with self._lock:
             self.is_running = running
 
     def get_summary(self) -> dict:
-        """Returns a summary of current KPIs."""
+        """returns a summary of current KPIs"""
         with self._lock:
             flights = list(self.flights.values())
             total = len(flights)

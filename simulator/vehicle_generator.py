@@ -1,7 +1,7 @@
 from models.ground_vehicle import GroundVehicle, VehicleType
 
 def generate_vehicles() -> list[GroundVehicle]:
-    """generates realistic set of ground vehicles for AMS"""
+    """generates a realistic set of ground vehicles for AMS"""
     vehicles = []
 
     for i in range(1, 7):

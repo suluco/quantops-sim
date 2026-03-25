@@ -5,6 +5,7 @@ from models.flight import Flight, FlightStatus
 
 
 def classify_severity(delay_minutes: int) -> EventSeverity:
+    """classifies event severity based on delay duration in min"""
     if delay_minutes < 15:
         return EventSeverity.SMALL
     elif delay_minutes < 45:

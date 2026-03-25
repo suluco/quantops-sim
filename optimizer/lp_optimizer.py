@@ -22,7 +22,7 @@ def assign_gates_lp(
         schedule: Schedule,
 ) -> dict[str, str | None]:
     """
-    Assigns gates to flights using LP
+    assigns gates to flights using LP
     minimizes total gate assignments to spread load evenly
     returns a dict mapping flight_id to gate_id, or None if infeasible
     """

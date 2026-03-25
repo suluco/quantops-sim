@@ -18,7 +18,7 @@ class EventSeverity(Enum):
 
 @dataclass
 class Event:
-    """Represents an operational event in the simulation."""
+    """represents an operational event in the simulation"""
 
     event_id: str
     event_type: EventType
@@ -29,5 +29,5 @@ class Event:
     resolved: bool = False
 
     def resolve(self) -> None:
-        """Marks the event as resolved."""
+        """marks the event as resolved"""
         self.resolved = True

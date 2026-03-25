@@ -2,7 +2,6 @@ import numpy as np
 from datetime import datetime, timedelta
 from models.flight import Flight, FlightStatus
 import random
-import string
 
 
 AIRLINES = ["KLM", "Transavia", "Ryanair", "Lufthansa", "British Airways", "Easyjet"]
@@ -52,7 +51,6 @@ def generate_flights(date: datetime, n: int = 50) -> list[Flight]:
     
     for i in range(n):
         airline = random.choice(AIRLINES)
-        other_airport = random.choice([d for d in DESTINATIONS if d != "AMS"])
 
         #70% Schengen, 30% non-Schengen
         if rng.random() < 0.7:

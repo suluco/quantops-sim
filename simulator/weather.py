@@ -67,7 +67,7 @@ def get_active_weather(
         events: list[WeatherEvent],
         sim_time: datetime,
 ) -> WeatherEvent | None:
-    """returns the most severe active weather event at sim_time, or None"""
+    """returns the most severe active weather event at sim_time or returns None"""
     active = [e for e in events if e.is_active(sim_time)]
     if not active:
         return None

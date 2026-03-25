@@ -96,7 +96,7 @@ def save_model(model: RandomForestClassifier, path: str = "models/delay_model.pk
 
 
 def load_model(path: str = "models/delay_model.pkl") -> RandomForestClassifier:
-    """loades trained model from disk"""
+    """loads trained model from disk"""
     data = joblib.load(path)
     airline_encoder.classes_ = data["airline_encoder"].classes_
     destination_encoder.classes = data["destination_encoder"].classes_

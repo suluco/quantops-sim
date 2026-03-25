@@ -19,7 +19,7 @@ def average_turnaround(flights: list[Flight]) -> float:
 
 
 def peak_hour_ratio(flights: list[Flight]) -> float:
-    """returns ratio of flights during peak hrs vs tot."""
+    """returns ratio of flights during peak hrs vs tot"""
     peak_hours = set(range(7, 9)) | set(range(17, 19))
     peak = sum(1 for f in flights if f.scheduled_arrival.hour in peak_hours)
     return peak / len(flights) if flights else 0.0

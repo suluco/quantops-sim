@@ -13,7 +13,7 @@ class FlightStatus(Enum):
 
 @dataclass
 class Flight:
-    """Represents a commercial flight in the simulation."""
+    """represents a commercial flight in the simulation"""
 
     flight_id: str
     airline: str
@@ -29,11 +29,11 @@ class Flight:
     passenger_count: int = 0
 
     def is_delayed(self) -> bool:
-        """Returns Ture if the flight has a delay."""
+        """returns True if the flight has a delay"""
         return self.delay_minutes > 0
     
     def turnaround_minutes(self) -> int:
-        """Returns the scheduled turnaround time in minutes."""
+        """returns the scheduled turnaround time in minutes"""
         delta = self.scheduled_departure - self.scheduled_arrival
         return int(delta.total_seconds() / 60)
     

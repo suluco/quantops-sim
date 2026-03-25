@@ -1,11 +1,12 @@
 import threading
 import queue
 import time
+import uuid
 from datetime import datetime, timedelta
 import numpy as np
 
 from models.flight import Flight
-from models.event import Event
+from models.event import Event, EventType, EventSeverity
 from simulator.flight_generator import generate_flights
 from simulator.delay_model import apply_delay
 from simulator.event_generator import create_delay_event, create_cancel_event
@@ -47,15 +48,15 @@ class SimulatorEngine:
         self._thread.start()
     
     def stop(self) -> None:
+        """stops the sim"""
         self.running = False
 
     def _advance_time(self) -> None:
+        """advances simulated time by 1 min"""
         self.sim_time += timedelta(minutes=1)
 
     def _check_flights(self) -> None:
         """Checks all flights and pushes events for those arriving at current sim time."""
-        import uuid
-        from models.event import Event, EventType, EventSeverity
 
         active_weather = get_active_weather(self.weather_events, self.sim_time)
 
@@ -68,7 +69,6 @@ class SimulatorEngine:
                 if active_weather and flight.is_delayed():
                     extra_delay = int(flight.delay_minutes * (active_weather.delay_factor - 1))
                     flight.delay_minutes += extra_delay
-                    from datetime import timedelta
                     flight.actual_arrival += timedelta(minutes=extra_delay)
                     flight.actual_departure += timedelta(minutes=extra_delay)
                     if self.state_store:
@@ -94,7 +94,7 @@ class SimulatorEngine:
                     self.state_store.add_event(event)
 
     def _run(self) -> None:
-        """Main simulation loop. Advances time and generates events."""
+        """main simulation loop. Advances time and generates events"""
         if self.state_store:
             self.state_store.set_running(True)
         end_time = self.sim_date.replace(hour=23, minute=0, second=0)

@@ -3,7 +3,7 @@ from models.gate import Gate, GateType
 
 def generate_gates() -> list[Gate]:
     """
-    generates realistic set of 25 gates for AMS divided across
+    generates a realistic set of 25 gates for AMS divided across
     3 terminals with different gate types
     """
     gates = []

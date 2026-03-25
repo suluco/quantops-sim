@@ -47,7 +47,7 @@ def _count_remaining_conflict(assignments: dict, flights: list, gates: list) -> 
 
 def run_benchmark(n_flights: int = 20, n_runs: int = 5) -> dict:
     """
-    uns all four algorithms on the same dataset and measures performance
+    runs all four algorithms on the same dataset and measures performance
     returns a dict with results per algorithm
     """
     results = {

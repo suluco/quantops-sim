@@ -12,7 +12,7 @@ def find_available_gate(
 ) -> Gate | None:
     """
     finds the first available gate for a flight using a greedy strategy
-    Schengen flights go to Terminal D, on-Schengen to Terminal E/F
+    Schengen flights go to Terminal D, non-Schengen to Terminal E/F
     eturns None if no gate is available
     """
     from simulator.flight_generator import SCHENGEN_DESTINATIONS

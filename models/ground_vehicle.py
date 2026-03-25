@@ -12,12 +12,12 @@ class VehicleType(Enum):
 
 @dataclass
 class GroundVehicle:
-    """Represents a ground vehicle in the sim"""
+    """represents a ground vehicle in the sim"""
 
     vehicle_id: str
     vehicle_type: VehicleType
     is_available: bool = True
-    current_gate_id: str | None =None
+    current_gate_id: str | None = None
 
     def assign_to_gate(self, gate_id: str) -> None:
         """assigns vehicle to a gate"""
@@ -27,6 +27,6 @@ class GroundVehicle:
     def release(self) -> None:
         """releases vehicle after completing its task"""
         self.current_gate_id = None
-        self.is_available =True
+        self.is_available = True
 
         
