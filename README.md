@@ -2,8 +2,6 @@
 
 An event-driven airport operations optimizer built in Python. The simulator generates realistic flight schedules, detects gate conflicts automatically, and replans in real-time using four optimization algorithms. A live Streamlit dashboard visualizes the current airport status, including a schematic live map with moving aircraft and ground vehicles.
 
-Built by Joren Veldhuis, student Industrial Engineering & Management at Hanze University of Applied Sciences, as a personal project in preparation for an internship at Airbus or CERN.
-
 ---
 
 ## What it does
